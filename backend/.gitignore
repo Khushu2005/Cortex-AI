@@ -1,0 +1,28 @@
+# Dependencies (Ye bahut heavy hota hai, upload nahi karte)
+node_modules/
+
+# Environment Variables (Security ke liye ye sabse important hai)
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Logs (Error logs ki zarurat GitHub par nahi hoti)
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs
+*.log
+
+# OS Generated Files (Mac/Windows ke bekaar files)
+.DS_Store
+Thumbs.db
+
+# Editor Directories (VS Code settings, optional)
+.vscode/
+.idea/
+
+# Build Output (Agar kabhi build banate ho)
+dist/
+build/
