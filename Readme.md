@@ -14,58 +14,108 @@ The project is divided into two distinct parts:
 
 ```bash
 Cortex-AI/
-├── backend/         # The Brain (API, AI Logic, Vector DB)
-└── frontend/        # The Interface (UI/UX - Coming Soon)
+├── backend/         
+└── frontend/        
 
----
----
 
----
 
 ## 🛡️ Backend (The Brain)
 
 The backend is the powerhouse of Cortex AI. It handles real-time communication, manages vector embeddings for memory, and connects with high-performance LLMs.
 
-### 🛠️ Backend Technologies
+🛠️ Backend Tech Stack
 
-![NodeJS](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)
-![Express.js](https://img.shields.io/badge/Express.js-404D59?style=for-the-badge)
-![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)
-![Socket.io](https://img.shields.io/badge/Socket.io-black?style=for-the-badge&logo=socket.io&logoColor=white)
-![JWT](https://img.shields.io/badge/JWT-323330?style=for-the-badge&logo=json-web-tokens&logoColor=pink)
-
-![Pinecone](https://img.shields.io/badge/PINECONE-VECTOR_DB-blue?style=for-the-badge)
-![Groq](https://img.shields.io/badge/GROQ_AI-LLAMA_3-F55036?style=for-the-badge)
-![Xenova](https://img.shields.io/badge/XENOVA-LOCAL_EMBEDDINGS-FFD21E?style=for-the-badge)
+Node.js
+Express.js
+MongoDB
+Socket.IO
+JWT Authentication
+Pinecone (Vector Database)
+Groq (LLaMA 3)
+Xenova (Local Embeddings)
 
 ### 📂 Backend Folder Structure
 
 ```bash
-Cortex-AI/
-├─ backend/
-│  ├─ src/
-│  │  ├─ controllers/
-│  │  │  ├─ auth.controller.js
-│  │  │  └─ chat.controller.js
-│  │  ├─ db/
-│  │  │  └─ db.js
-│  │  ├─ middleware/
-│  │  │  └─ auth.middleware.js
-│  │  ├─ models/
-│  │  │  ├─ chat.model.js
-│  │  │  ├─ message.model.js
-│  │  │  └─ user.model.js
-│  │  ├─ routes/
-│  │  │  ├─ auth.route.js
-│  │  │  └─ chat.routes.js
-│  │  ├─ services/
-│  │  │  ├─ ai.service.js
-│  │  │  └─ vector.service.js
-│  │  ├─ sockets/
-│  │  │  └─ socket.server.js
-│  │  └─ app.js
-│  ├─ .env
-│  ├─ .gitignore
-│  ├─ package-lock.json
-│  ├─ package.json
-│  └─ server.js
+backend/
+├─ src/
+│  ├─ controllers/        # Request handlers
+│  │  ├─ auth.controller.js
+│  │  └─ chat.controller.js
+│  ├─ db/                 # Database connection
+│  │  └─ db.js
+│  ├─ middleware/         # Auth & security middleware
+│  │  └─ auth.middleware.js
+│  ├─ models/             # Mongoose schemas
+│  │  ├─ chat.model.js
+│  │  ├─ message.model.js
+│  │  └─ user.model.js
+│  ├─ routes/             # API routes
+│  │  ├─ auth.route.js
+│  │  └─ chat.routes.js
+│  ├─ services/           # AI & Vector logic
+│  │  ├─ ai.service.js
+│  │  └─ vector.service.js
+│  ├─ sockets/            # Real-time socket server
+│  │  └─ socket.server.js
+│  └─ app.js              # Express app config
+├─ .env
+├─ .gitignore
+├─ flow.excalidraw        # Architecture / flow diagram
+├─ package.json
+├─ package-lock.json
+└─ server.js              # App entry point
+
+
+## 🎨 Frontend – The Interface
+The frontend provides a clean, responsive, and chat-focused UI, inspired by modern AI chat platforms like ChatGPT.
+
+🛠️ Frontend Tech Stack
+
+React (Vite)
+SCSS (Modular Architecture)
+Socket.IO Client
+REST API Integration
+Modern Component-based UI
+
+### 📂 Frontend Folder Structure
+frontend/
+├─ public/
+│  └─ vite.svg
+├─ src/
+│  ├─ components/
+│  │  └─ chat/
+│  │     ├─ ChatComponents.scss
+│  │     ├─ ChatComponents.css
+│  │     ├─ ChatComponents.css.map
+│  │     ├─ ChatListPanel.jsx
+│  │     ├─ ChatWindow.jsx
+│  │     ├─ ProfilePanel.jsx
+│  │     └─ Sidebar.jsx
+│  ├─ pages/
+│  │  ├─ ChatInterface.jsx
+│  │  ├─ Login.jsx
+│  │  ├─ Register.jsx
+│  │  ├─ ForgotPassword.jsx
+│  │  ├─ Login.scss
+│  │  ├─ Register.scss
+│  │  └─ ForgotPassword.scss
+│  ├─ services/
+│  │  ├─ api.js           # REST API calls
+│  │  └─ socket.js        # Socket.IO client
+│  ├─ styles/
+│  │  ├─ abstracts/
+│  │  │  ├─ _variables.scss
+│  │  │  └─ _mixins.scss
+│  │  ├─ global.scss
+│  │  ├─ global.css
+│  │  └─ global.css.map
+│  ├─ App.jsx
+│  └─ main.jsx
+├─ index.html
+├─ vite.config.js
+├─ eslint.config.js
+├─ package.json
+├─ package-lock.json
+└─ README.md
+
