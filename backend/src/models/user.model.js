@@ -20,7 +20,10 @@ const userSchema = new mongoose.Schema({
 
     password: {
         type: String,
-    }
+    },
+    resetPasswordOtp: { type: Number },
+    resetPasswordExpires: { type: Date }
+   
 },
 
     { timestamps: true }

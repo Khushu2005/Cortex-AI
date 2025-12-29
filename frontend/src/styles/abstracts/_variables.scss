@@ -1,0 +1,44 @@
+:root {
+  --bg-primary: #050505;
+  --bg-secondary: #0a0a0a;
+  --bg-glass: rgba(20, 20, 20, 0.75);
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --accent-color: #ffc107;
+  --border-color: rgba(255, 255, 255, 0.08);
+
+  --msg-sent: #ffc107;
+  --msg-sent-text: #000000;
+  --msg-received: rgba(255, 255, 255, 0.05);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] {
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #ffffff;
+  --bg-glass: rgba(255, 255, 255, 0.9);
+
+  --text-primary: #111111;
+  --text-secondary: #555555;
+
+  --accent-color: #d97706;
+
+  --border-color: rgba(0, 0, 0, 0.1);
+
+  --msg-sent: #ffc107;
+  --msg-sent-text: #000000;
+
+  --msg-received: #ffffff;
+
+  --shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+$font-main: "Inter", sans-serif;
+$font-tech: "Rajdhani", sans-serif;
+
+$color-bg: var(--bg-primary);
+$color-primary: var(--accent-color);
+$color-accent: var(--bg-secondary);
+$color-text: var(--text-primary);
+$color-text-secondary: var(--text-secondary);
+$color-highlight: var(--accent-color);

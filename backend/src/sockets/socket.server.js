@@ -8,21 +8,34 @@ const { createMemory, queryMemory } = require('../services/vector.service');
 
 
 function initSocketServer(httpServer) {
+ 
     const io = new Server(httpServer, {
-        cors: { origin: "*" }
+        cors: {
+            origin: "http://localhost:5173", 
+            methods: ["GET", "POST"],
+            credentials: true 
+        }
     });
 
     io.use(async (socket, next) => {
         const cookies = cookie.parse(socket.handshake.headers?.cookie || "");
+
         if (!cookies.token) {
             return next(new Error('Authentication error: No token provided'));
         }
+
         try {
             const decoded = jwt.verify(cookies.token, process.env.JWT_SECRET_KEY);
             const user = await userModel.findById(decoded.id);
+
+            if (!user) {
+                return next(new Error('Authentication error: User not found'));
+            }
+
             console.log("User Connected:", user?.fullname?.firstname);
             socket.user = user;
             next();
+
         } catch (err) {
             return next(new Error('Authentication error: Invalid or expired token'));
         }
@@ -37,76 +50,58 @@ function initSocketServer(httpServer) {
                 }
                 const userId = socket.user._id.toString();
 
-                // (request)
+                const [savedUserMsg, userVector] = await Promise.all([
+                    messageModel.create({
+                        chat: messagePayload.chat,
+                        user: userId,
+                        content: messagePayload.content,
+                        role: 'user'
+                    }),
+                    aiService.generateEmbedding(messagePayload.content)
 
-                //  Current Message Save (MongoDB) 
-                const savedUserMsg = await messageModel.create({
-                    chat: messagePayload.chat,
-                    user: userId,
-                    content: messagePayload.content,
-                    role: 'user'
+                ])
+
+                await createMemory({
+                    vectors: userVector,
+                    metadata: {
+                        chat: messagePayload.chat,
+                        userId: userId,
+                        text: messagePayload.content,
+                        role: 'user'
+                    },
+                    messageID: savedUserMsg._id.toString()
                 });
 
-                // LONG TERM MEMORY LOGIC (Pinecone) 
-                let context = "";
-
-                try {
-                    //  Vector Generating vector 
-                    const userVector = await aiService.generateEmbedding(messagePayload.content);
-
-                    //  Query Memory 
-                    const matches = await queryMemory({
+                let [matches, chatHistory] = await Promise.all([
+                    queryMemory({
                         queryvector: userVector,
                         metadata: { userId: userId },
                         limit: 3
-                    });
+                    }),
 
-                    // C. Context
-                    if (matches && matches.length > 0) {
-                        context = matches.map(match => match.metadata.text).join("\n");
-                        console.log("Long-Term Context Found:", matches.length);
-                    }
-
-                    // D. Memory Store in pinecone
-                    await createMemory({
-                        vectors: userVector,
-                        metadata: {
-                            chat: messagePayload.chat,
-                            userId: userId,
-                            text: messagePayload.content,
-                            role: 'user'
-                        },
-                        messageID: savedUserMsg._id.toString()
-                    });
-
-                } catch (err) {
-                    console.error("Vector Error:", err.message);
-                }
-
-
-
-
-
-
-                //  Short Term Memory (Current Chat Context - MongoDB)
-                let chatHistory = await messageModel.find({
-                    chat: messagePayload.chat
-                })
-                    .sort({ createdAt: -1 })
-                    .limit(10)
-                    .lean();
+                    messageModel.find({
+                        chat: messagePayload.chat
+                    })
+                        .sort({ createdAt: -1 })
+                        .limit(10)
+                        .lean()
+                ]);
 
                 chatHistory = chatHistory.reverse();
 
-                //  Format History for Groq (short term memory)
+                let context = "";
+
+                if (matches && matches.length > 0) {
+                    context = matches.map(match => match.metadata.text).join("\n");
+                    console.log("Long-Term Context Found:", matches.length);
+                }
+
                 const historyForAi = chatHistory.map(item => {
                     return {
                         role: (item.role === 'user') ? 'user' : 'assistant',
                         content: item.content
                     }
                 });
-
-                //  Inject Long Term Context
                 if (context) {
                     historyForAi.unshift({
                         role: 'system',
@@ -116,7 +111,6 @@ function initSocketServer(httpServer) {
 
                 // Consoling short term and long term memory
                 console.log("\n--------------------------------------------------");
-
 
                 // 1. Long Term Memory
                 console.log(" Long Term :");
@@ -133,39 +127,36 @@ function initSocketServer(httpServer) {
 
                 console.log("--------------------------------------------------\n");
 
-                //(response)
+
 
                 //  Generate Response
                 const response = await aiService.generateResponse(historyForAi);
-
-                //   AI Response (MongoDB)
-                const savedAiMsg = await messageModel.create({
-                    chat: messagePayload.chat,
-                    user: userId,
-                    content: response,
-                    role: 'model'
-                });
-
-                //  Save AI Response to Long Term Memory
-                try {
-                    const aiVector = await aiService.generateEmbedding(response);
-                    await createMemory({
-                        vectors: aiVector,
-                        metadata: {
-                            chat: messagePayload.chat,
-                            userId: userId,
-                            text: response,
-                            role: 'model'
-                        },
-                        messageID: savedAiMsg._id.toString()
-                    });
-                } catch (e) { }
-
 
                 //  Send Response
                 socket.emit('ai-response', {
                     content: response,
                     chat: messagePayload.chat
+                });
+
+                const [savedAiMsg, aiVector] = await Promise.all([
+                    messageModel.create({
+                        chat: messagePayload.chat,
+                        user: userId,
+                        content: response,
+                        role: 'model'
+                    }),
+                    aiService.generateEmbedding(response)
+                ]);
+
+                await createMemory({
+                    vectors: aiVector,
+                    metadata: {
+                        chat: messagePayload.chat,
+                        userId: userId,
+                        text: response,
+                        role: 'model'
+                    },
+                    messageID: savedAiMsg._id.toString()
                 });
 
             } catch (error) {
