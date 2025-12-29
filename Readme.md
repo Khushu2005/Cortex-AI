@@ -5,7 +5,19 @@
 ![RAG Architecture](https://img.shields.io/badge/Architecture-RAG-blue?style=for-the-badge)
 
 **Cortex AI** is a next-generation chat application designed to mimic human-like memory. Unlike traditional chatbots that forget context once a session ends, Cortex utilizes **Retrieval Augmented Generation (RAG)** to retain long-term context across different conversations, making it your true digital "Second Brain."
+## 📸 Project Screenshots
 
+### Authentication
+![Authentication](./assets/auth.png)
+
+### Chat Interface
+![Chat Interface](./assets/ChatInterface.png)
+
+### RealtimeChat
+![RealtimeChat](./assets/RealtimeChat.png)
+
+### ChatHistory
+![ChatHistory](./assets/ChatHistory.png)
 ---
 
 ## 📂 Project Architecture
@@ -119,18 +131,6 @@ frontend/
 ├─ package-lock.json
 └─ README.md
 
----
 
-## 📸 Project Screenshots
 
-### Authentication
-![Authentication](./assets/auth.png)
 
-### Chat Interface
-![Chat Interface](./assets/ChatInterface.png)
-
-### Memory & RAG Flow
-![RAG Flow](./assets/RealtimeChat.png)
-
-### Real-time Communication
-![Socket Communication](./assets/ChatHisrory.png)
