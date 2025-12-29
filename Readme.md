@@ -119,3 +119,18 @@ frontend/
 ├─ package-lock.json
 └─ README.md
 
+---
+
+## 📸 Project Screenshots
+
+### Authentication
+![Authentication](./assets/auth.png)
+
+### Chat Interface
+![Chat Interface](./assets/ChatInterface.png)
+
+### Memory & RAG Flow
+![RAG Flow](./assets/RealtimeChat.png)
+
+### Real-time Communication
+![Socket Communication](./assets/ChatHisrory.png)
