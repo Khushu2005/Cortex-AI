@@ -6,8 +6,22 @@ const app = express();
 
 
 app.use(cors({
-    origin: ['http://localhost:5173','https://cortex-ai-omega.vercel.app'], 
-    credentials: true,              
+    origin: function (origin, callback) {
+      
+        const allowedOrigins = [
+            'http://localhost:5173',
+            'https://cortex-ai-omega.vercel.app'
+        ];
+
+   
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.log("Blocked by CORS:", origin); 
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
