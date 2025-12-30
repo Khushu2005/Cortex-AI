@@ -1,4 +1,4 @@
-const { Server } = require('socket.io')
+const { Server } = require('socket.io');
 const cookie = require('cookie');
 const jwt = require('jsonwebtoken');
 const userModel = require('../models/user.model');
@@ -6,43 +6,58 @@ const aiService = require('../services/ai.service');
 const messageModel = require('../models/message.model');
 const { createMemory, queryMemory } = require('../services/vector.service');
 
-
 function initSocketServer(httpServer) {
- 
+
     const io = new Server(httpServer, {
         cors: {
-            origin: ["http://localhost:5173","https://cortex-ai-omega.vercel.app"], 
+            // 🔥 Vercel aur Localhost dono allowed
+            origin: ["http://localhost:5173", "https://cortex-ai-omega.vercel.app"],
             methods: ["GET", "POST"],
-            credentials: true 
-        }
+            credentials: true
+        },
+        // 🔥 YE LINE ZAROORI HAI (Connection Stability ke liye)
+        transports: ['websocket', 'polling']
     });
 
     io.use(async (socket, next) => {
-        const cookies = cookie.parse(socket.handshake.headers?.cookie || "");
-
-        if (!cookies.token) {
-            return next(new Error('Authentication error: No token provided'));
-        }
-
         try {
-            const decoded = jwt.verify(cookies.token, process.env.JWT_SECRET_KEY);
-            const user = await userModel.findById(decoded.id);
+            // 1. Cookies parse karo
+            const cookies = cookie.parse(socket.handshake.headers?.cookie || "");
+            
+            // 2. Token dhoondo (Cookie mein YA Handshake auth mein)
+            // Ye fallback zaroori hai agar browser cookie block karde
+            const token = cookies.token || socket.handshake.auth?.token;
+
+            if (!token) {
+                return next(new Error('Authentication error: No token provided'));
+            }
+
+            // 3. Token Verify karo
+            const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+            const user = await userModel.findById(decoded.id).select("-password");
 
             if (!user) {
                 return next(new Error('Authentication error: User not found'));
             }
 
-            console.log("User Connected:", user?.fullname?.firstname);
+            console.log("🟢 Socket Connected:", user?.fullname?.firstname);
             socket.user = user;
             next();
 
         } catch (err) {
+            console.log("Socket Auth Error:", err.message);
             return next(new Error('Authentication error: Invalid or expired token'));
         }
-    })
+    });
 
     io.on('connection', (socket) => {
+        console.log(`User connected with ID: ${socket.id}`);
 
+        socket.on('disconnect', () => {
+            console.log("🔴 User Disconnected");
+        });
+
+        // 🔥 TERA AI LOGIC (Exactly same as you provided)
         socket.on('ai-message', async (messagePayload) => {
             try {
                 if (typeof messagePayload === 'string') {
@@ -58,8 +73,7 @@ function initSocketServer(httpServer) {
                         role: 'user'
                     }),
                     aiService.generateEmbedding(messagePayload.content)
-
-                ])
+                ]);
 
                 await createMemory({
                     vectors: userVector,
@@ -78,19 +92,17 @@ function initSocketServer(httpServer) {
                         metadata: { userId: userId },
                         limit: 3
                     }),
-
                     messageModel.find({
                         chat: messagePayload.chat
                     })
-                        .sort({ createdAt: -1 })
-                        .limit(10)
-                        .lean()
+                    .sort({ createdAt: -1 })
+                    .limit(10)
+                    .lean()
                 ]);
 
                 chatHistory = chatHistory.reverse();
 
                 let context = "";
-
                 if (matches && matches.length > 0) {
                     context = matches.map(match => match.metadata.text).join("\n");
                     console.log("Long-Term Context Found:", matches.length);
@@ -102,6 +114,7 @@ function initSocketServer(httpServer) {
                         content: item.content
                     }
                 });
+
                 if (context) {
                     historyForAi.unshift({
                         role: 'system',
@@ -109,30 +122,15 @@ function initSocketServer(httpServer) {
                     });
                 }
 
-                // Consoling short term and long term memory
-                console.log("\n--------------------------------------------------");
+                // Logs for debugging
+                console.log("\n--- Memory Logs ---");
+                console.log("Short Term:", JSON.stringify(historyForAi.slice(-2), null, 2));
+                console.log("-------------------\n");
 
-                // 1. Long Term Memory
-                console.log(" Long Term :");
-
-                const formattedLongTerm = context ? context.split("\n") : ["No relevant past memories found."];
-                console.log(JSON.stringify(formattedLongTerm, null, 2));
-
-                console.log("\n--------------------------------------------------");
-
-                // 2. Short Term Memory 
-                console.log(" Short Term  :");
-                const cleanShortTerm = historyForAi.filter(msg => msg.role !== 'system');
-                console.log(JSON.stringify(cleanShortTerm, null, 2));
-
-                console.log("--------------------------------------------------\n");
-
-
-
-                //  Generate Response
+                // Generate Response
                 const response = await aiService.generateResponse(historyForAi);
 
-                //  Send Response
+                // Send Response
                 socket.emit('ai-response', {
                     content: response,
                     chat: messagePayload.chat
@@ -160,10 +158,10 @@ function initSocketServer(httpServer) {
                 });
 
             } catch (error) {
-                console.error("Error:", error);
+                console.error("Socket Message Error:", error);
                 socket.emit('error', { message: error.message });
             }
-        })
+        });
     });
 }
 
