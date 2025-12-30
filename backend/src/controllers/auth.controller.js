@@ -6,11 +6,12 @@ const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER, 
-        pass: process.env.EMAIL_PASS  
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
     }
 });
-//   REGISTER USER 
+
+// REGISTER USER 
 async function registerUser(req, res) {
     try {
         const { fullname: { firstname, lastname }, password, email } = req.body;
@@ -34,18 +35,15 @@ async function registerUser(req, res) {
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY);
 
-      
+        // 🔥 FIXED COOKIE SETTINGS
         res.cookie("token", token, {
             httpOnly: true,
-           expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            secure: process.env.NODE_ENV === 'production'
+            expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            sameSite: 'none',  // Cross-site ke liye zaroori hai
+            secure: true       // Render pe HTTPS hai isliye true hi rakho
         });
 
-         console.log(`User Logged In: 
-            ${user.email}
-             ${user.fullname.firstname} ${user.fullname.lastname} 
-             (${user._id})`);
-
+        console.log(`User Logged In: ${user.email} (${user._id})`);
 
         res.status(201).json({
             message: "User registered successfully",
@@ -62,7 +60,7 @@ async function registerUser(req, res) {
     }
 }
 
-//  LOGIN USER
+// LOGIN USER
 async function loginUser(req, res) {
     try {
         const { email, password } = req.body;
@@ -79,14 +77,15 @@ async function loginUser(req, res) {
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY);
 
-        
+        // 🔥 FIXED COOKIE SETTINGS
         res.cookie("token", token, {
             httpOnly: true,
             expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            secure: process.env.NODE_ENV === 'production'
+            sameSite: 'none',  // Cross-site ke liye zaroori hai
+            secure: true       // Render pe HTTPS hai isliye true hi rakho
         });
 
-        console.log(`User Logged In: ${user.email} ${user.fullname.firstname} ${user.fullname.lastname} (${user._id})`);
+        console.log(`User Logged In: ${user.email} (${user._id})`);
 
         res.status(200).json({
             message: "Login successful",
@@ -103,23 +102,24 @@ async function loginUser(req, res) {
     }
 }
 
-//  LOGOUT USER 
+// LOGOUT USER 
 async function logoutUser(req, res) {
     try {
-        
         if (req.user) {
-            console.log(`User Logged Out: ${req.user.email} ${req.user.fullname.firstname} ${req.user.fullname.lastname} (${req.user._id})`);
+            console.log(`User Logged Out: ${req.user.email}`);
         }
 
-        
+        // 🔥 LOGOUT MEIN BHI SAME SETTINGS CHAHIYE DELETE KARNE KE LIYE
         res.cookie("token", null, {
             httpOnly: true,
-            expires: new Date(Date.now()), 
+            expires: new Date(Date.now()),
+            sameSite: 'none',
+            secure: true
         });
 
-        res.status(200).json({ 
+        res.status(200).json({
             message: "Logged out successfully",
-            user: req.user ? req.user.email : "Unknown" 
+            user: req.user ? req.user.email : "Unknown"
         });
 
     } catch (error) {
@@ -127,10 +127,10 @@ async function logoutUser(req, res) {
         res.status(500).json({ message: "Error logging out" });
     }
 }
+
 // UPDATE USER PROFILE 
 async function updateUserProfile(req, res) {
     try {
-
         const userId = req.user._id;
         const { firstname, lastname, password } = req.body;
 
@@ -139,17 +139,15 @@ async function updateUserProfile(req, res) {
             return res.status(404).json({ message: "User not found" });
         }
 
-
         if (firstname) user.fullname.firstname = firstname;
         if (lastname) user.fullname.lastname = lastname;
-
 
         if (password) {
             user.password = await bcrypt.hash(password, 10);
         }
 
         await user.save();
-         console.log(`User Updated : ${user.email} ${user.fullname.firstname} ${user.fullname.lastname} ${userId}`);
+        console.log(`User Updated : ${user.email}`);
 
         res.status(200).json({
             message: "Profile updated successfully",
@@ -169,23 +167,19 @@ async function sendForgotPasswordOtp(req, res) {
     try {
         const { email } = req.body;
 
-        
         const user = await UserModel.findOne({ email });
         if (!user) {
             return res.status(404).json({ message: "User not found with this email" });
         }
 
-       
         const otp = Math.floor(1000 + Math.random() * 9000);
 
-      
         user.resetPasswordOtp = otp;
-        user.resetPasswordExpires = Date.now() + 10 * 60 * 1000;expire
+        user.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
         await user.save();
 
-        // 4. Email Bhejo
         const mailOptions = {
-            from: 'tera_email@gmail.com',
+            from: process.env.EMAIL_USER || 'tera_email@gmail.com', // Fix: Use env if available
             to: user.email,
             subject: 'Password Reset OTP - Cortex AI',
             text: `Hello ${user.fullname.firstname},\n\nYour OTP for password reset is: ${otp}\n\nThis OTP is valid for 10 minutes.\nDo not share this with anyone.`
@@ -204,30 +198,26 @@ async function sendForgotPasswordOtp(req, res) {
     }
 }
 
-
 async function verifyOtpAndResetPassword(req, res) {
     try {
         const { email, otp, newPassword } = req.body;
 
-       
         const user = await UserModel.findOne({
             email,
             resetPasswordOtp: otp,
-            resetPasswordExpires: { $gt: Date.now() } 
+            resetPasswordExpires: { $gt: Date.now() }
         });
 
         if (!user) {
             return res.status(400).json({ message: "Invalid OTP or OTP has expired" });
         }
 
-    
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-       
         user.password = hashedPassword;
         user.resetPasswordOtp = undefined;
         user.resetPasswordExpires = undefined;
-        
+
         await user.save();
 
         res.status(200).json({ message: "Password reset successfully! You can now login." });
@@ -239,7 +229,6 @@ async function verifyOtpAndResetPassword(req, res) {
 
 async function getMe(req, res) {
     try {
-
         const user = await UserModel.findById(req.user._id).select('-password');
 
         if (!user) {
@@ -259,5 +248,12 @@ async function getMe(req, res) {
     }
 }
 
-module.exports = { registerUser, loginUser, logoutUser, updateUserProfile,sendForgotPasswordOtp,     
-    verifyOtpAndResetPassword , getMe};
+module.exports = { 
+    registerUser, 
+    loginUser, 
+    logoutUser, 
+    updateUserProfile, 
+    sendForgotPasswordOtp, 
+    verifyOtpAndResetPassword, 
+    getMe 
+};
