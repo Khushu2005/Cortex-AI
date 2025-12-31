@@ -3,12 +3,14 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const axios = require("axios");
 
 
+const axios = require("axios");
+
 async function generateEmbedding(text) {
   try {
     const response = await axios.post(
       "https://router.huggingface.co/hf-inference/models/sentence-transformers/all-MiniLM-L6-v2",
       {
-        inputs: text
+        sentences: [text]   // 🔥 YAHI FIX HAI
       },
       {
         headers: {
@@ -19,17 +21,22 @@ async function generateEmbedding(text) {
       }
     );
 
-    // Output: [ [384 numbers] ]
+    // Router output: [[384 numbers]]
+    if (!Array.isArray(response.data)) {
+      throw new Error("Invalid embedding response");
+    }
+
     return response.data[0];
 
   } catch (error) {
-    console.error(
-      "HF Embedding Error:",
-      error.response?.data || error.message
-    );
+    console.error("HF EMBEDDING ERROR 🔴");
+    console.error("Message:", error.message);
+    console.error("Response:", error.response?.data);
     throw error;
   }
 }
+
+module.exports = { generateEmbedding };
 
 
 async function generateResponse(history) {
