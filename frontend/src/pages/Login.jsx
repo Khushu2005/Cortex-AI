@@ -30,6 +30,9 @@ const Login = () => {
       const res = await api.post("/auth/login", formData);
 
       console.log("✅ Logged In:", res.data);
+      if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+      }
 
       navigate("/chat");
     } catch (error) {

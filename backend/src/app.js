@@ -10,7 +10,7 @@ app.use(cors({
       
         const allowedOrigins = [
             'http://localhost:5173',
-            'https://cortex-ai-omega.vercel.app'
+            // 'https://cortex-ai-omega.vercel.app'
         ];
 
    

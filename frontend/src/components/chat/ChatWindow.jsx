@@ -45,6 +45,7 @@ const ChatWindow = ({ activeChat }) => {
     const handleError = (err) => {
         console.error("Socket Error:", err);
         setIsTyping(false);
+        alert("Connection error! Please refresh.");
     };
 
     socket.on('ai-response', handleAiResponse);
