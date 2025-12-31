@@ -10,33 +10,40 @@ async function generateEmbedding(text) {
   try {
     const response = await axios.post(
       "https://router.huggingface.co/hf-inference/models/sentence-transformers/all-MiniLM-L6-v2",
-      {
-        inputs: text   // 🔥 ONLY THIS
-      },
+      { inputs: text },
       {
         headers: {
           Authorization: `Bearer ${process.env.HF_API_KEY}`,
           "Content-Type": "application/json"
         },
-        timeout: 20000
+        timeout: 20000 // 20 seconds timeout achi practice hai
       }
     );
 
-    // Response format: [ [384 numbers] ]
-    if (!Array.isArray(response.data)) {
-      throw new Error("Invalid embedding response from HF");
+    const data = response.data;
+
+    // 🔥 Safety Check: Handle both flat and nested arrays
+    if (Array.isArray(data) && data.length > 0) {
+        // Agar pehla element bhi array hai, matlab output [[...]] hai -> return data[0]
+        if (Array.isArray(data[0])) {
+            return data[0];
+        }
+        // Agar pehla element number hai, matlab output [...] hai -> return data
+        return data;
     }
 
-    return response.data[0]; // 384-d vector
+    throw new Error("Invalid embedding response format");
 
   } catch (error) {
-    console.error("HF EMBEDDING ERROR ❌");
-    console.error("Status:", error.response?.status);
-    console.error("Data:", error.response?.data);
+    console.error("HF EMBEDDING ERROR ❌", error.message);
+    // Agar axios ka error hai to details print karo
+    if (error.response) {
+        console.error("Status:", error.response.status);
+        console.error("Data:", error.response.data);
+    }
     throw error;
   }
 }
-
 
 
 async function generateResponse(history) {
