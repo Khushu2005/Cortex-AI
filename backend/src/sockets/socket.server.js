@@ -16,39 +16,37 @@ function initSocketServer(httpServer) {
             credentials: true
         },
         // 🔥 YE LINE ZAROORI HAI (Connection Stability ke liye)
-        transports: ['websocket', 'polling']
+        transports: ['polling', 'websocket']
+
     });
 
-    io.use(async (socket, next) => {
-        try {
-            // 1. Cookies parse karo
-            const cookies = cookie.parse(socket.handshake.headers?.cookie || "");
-            
-            // 2. Token dhoondo (Cookie mein YA Handshake auth mein)
-            // Ye fallback zaroori hai agar browser cookie block karde
-            const token = cookies.token || socket.handshake.auth?.token;
+   io.use(async (socket, next) => {
+  try {
+    const token =
+      socket.handshake.auth?.token ||
+      cookie.parse(socket.handshake.headers?.cookie || "").token;
 
-            if (!token) {
-                return next(new Error('Authentication error: No token provided'));
-            }
+    if (!token) {
+      return next(new Error("Authentication error: No token"));
+    }
 
-            // 3. Token Verify karo
-            const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-            const user = await userModel.findById(decoded.id).select("-password");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const user = await userModel.findById(decoded.id).select("-password");
 
-            if (!user) {
-                return next(new Error('Authentication error: User not found'));
-            }
+    if (!user) {
+      return next(new Error("Authentication error: User not found"));
+    }
 
-            console.log("🟢 Socket Connected:", user?.fullname?.firstname);
-            socket.user = user;
-            next();
+    socket.user = user;
+    console.log("🟢 Socket Auth OK:", user.fullname.firstname);
+    next();
 
-        } catch (err) {
-            console.log("Socket Auth Error:", err.message);
-            return next(new Error('Authentication error: Invalid or expired token'));
-        }
-    });
+  } catch (err) {
+    console.log("Socket Auth Error:", err.message);
+    next(new Error("Authentication error"));
+  }
+});
+
 
     io.on('connection', (socket) => {
         console.log(`User connected with ID: ${socket.id}`);
