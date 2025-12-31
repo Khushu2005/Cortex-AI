@@ -5,12 +5,13 @@ const axios = require("axios");
 
 
 
+
 async function generateEmbedding(text) {
   try {
     const response = await axios.post(
       "https://router.huggingface.co/hf-inference/models/sentence-transformers/all-MiniLM-L6-v2",
       {
-        sentences: [text]   // 🔥 YAHI FIX HAI
+        inputs: text   // 🔥 ONLY THIS
       },
       {
         headers: {
@@ -21,22 +22,21 @@ async function generateEmbedding(text) {
       }
     );
 
-    // Router output: [[384 numbers]]
+    // Response format: [ [384 numbers] ]
     if (!Array.isArray(response.data)) {
-      throw new Error("Invalid embedding response");
+      throw new Error("Invalid embedding response from HF");
     }
 
-    return response.data[0];
+    return response.data[0]; // 384-d vector
 
   } catch (error) {
-    console.error("HF EMBEDDING ERROR 🔴");
-    console.error("Message:", error.message);
-    console.error("Response:", error.response?.data);
+    console.error("HF EMBEDDING ERROR ❌");
+    console.error("Status:", error.response?.status);
+    console.error("Data:", error.response?.data);
     throw error;
   }
 }
 
-module.exports = { generateEmbedding };
 
 
 async function generateResponse(history) {
