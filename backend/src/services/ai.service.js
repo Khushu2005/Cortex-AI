@@ -1,27 +1,27 @@
 const Groq = require("groq-sdk");
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
-let embedder = null;
-
-async function getEmbedder() {
-    if (!embedder) {
-        console.log("Loading Embedding Model locally...");
-        const { pipeline } = await import('@xenova/transformers');
-        embedder = await pipeline('feature-extraction', 'Xenova/all-mpnet-base-v2');
-        console.log("Embedding Model Loaded!");
-    }
-    return embedder;
-}
+const axios = require("axios");
 
 async function generateEmbedding(text) {
-    try {
-        const pipe = await getEmbedder();
-        const output = await pipe(text, { pooling: 'mean', normalize: true });
-        return Array.from(output.data);
-    } catch (error) {
-        console.error("Embedding Error:", error);
-        throw error;
-    }
+  try {
+    const response = await axios.post(
+      "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2",
+      { inputs: text },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.HF_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    // Output: [[384 numbers]]
+    return response.data[0];
+
+  } catch (error) {
+    console.error("Embedding Error:", error.response?.data || error.message);
+    throw error;
+  }
 }
 
 async function generateResponse(history) {

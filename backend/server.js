@@ -3,11 +3,19 @@ const server = require('./src/app')
 const ConnectToDb = require('./src/db/db')
 const initSocketServer = require('./src/sockets/socket.server');
 const httpServer= require('http').createServer(server);
+const cors = require('cors');
 
 ConnectToDb();
 
-initSocketServer(httpServer);
 
+initSocketServer(httpServer);
+server.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://cortex-ai-frontend.vercel.app" // agar deployed frontend ho
+  ],
+  credentials: true
+}));
 
 
 httpServer.listen('3000',(req,res)=>{
