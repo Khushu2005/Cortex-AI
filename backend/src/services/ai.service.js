@@ -2,27 +2,35 @@ const Groq = require("groq-sdk");
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const axios = require("axios");
 
+
 async function generateEmbedding(text) {
   try {
     const response = await axios.post(
-      "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2",
-      { inputs: text },
+      "https://router.huggingface.co/hf-inference/models/sentence-transformers/all-MiniLM-L6-v2",
+      {
+        inputs: text
+      },
       {
         headers: {
           Authorization: `Bearer ${process.env.HF_API_KEY}`,
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
+        timeout: 20000
       }
     );
 
-    // Output: [[384 numbers]]
+    // Output: [ [384 numbers] ]
     return response.data[0];
 
   } catch (error) {
-    console.error("Embedding Error:", error.response?.data || error.message);
+    console.error(
+      "HF Embedding Error:",
+      error.response?.data || error.message
+    );
     throw error;
   }
 }
+
 
 async function generateResponse(history) {
     try {
