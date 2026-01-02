@@ -8,7 +8,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Agar koi seedha '/' pe aaye toh Login pe bhej do */}
+       
         <Route path="/" element={<Navigate to="/login" />} />
         
         <Route path="/login" element={<Login />} />

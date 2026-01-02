@@ -10,31 +10,29 @@ function initSocketServer(httpServer) {
 
     const io = new Server(httpServer, {
         cors: {
-            // 🔥 Vercel aur Localhost dono allowed
             origin: ["http://localhost:5173", 
-                "https://cortex-ai-omega.vercel.app"
+                // "https://cortex-ai-omega.vercel.app"
             ],
             methods: ["GET", "POST"],
             credentials: true
         },
-        // 🔥 YE LINE ZAROORI HAI (Connection Stability ke liye)
+     
         transports: ['websocket', 'polling']
     });
 
     io.use(async (socket, next) => {
         try {
-            // 1. Cookies parse karo
+            
             const cookies = cookie.parse(socket.handshake.headers?.cookie || "");
             
-            // 2. Token dhoondo (Cookie mein YA Handshake auth mein)
-            // Ye fallback zaroori hai agar browser cookie block karde
+        
             const token = cookies.token || socket.handshake.auth?.token;
 
             if (!token) {
                 return next(new Error('Authentication error: No token provided'));
             }
 
-            // 3. Token Verify karo
+           
             const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
             const user = await userModel.findById(decoded.id).select("-password");
 
@@ -59,7 +57,7 @@ function initSocketServer(httpServer) {
             console.log("🔴 User Disconnected");
         });
 
-        // 🔥 TERA AI LOGIC (Exactly same as you provided)
+       
         socket.on('ai-message', async (messagePayload) => {
             try {
                 if (typeof messagePayload === 'string') {

@@ -2,10 +2,10 @@ require('dotenv').config();
 const Groq = require("groq-sdk");
 const axios = require("axios");
 
-// ✅ Groq Setup
+
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// ✅ NEW HuggingFace Model Setup
+
 const HF_MODEL = "BAAI/bge-base-en-v1.5";
 const HF_API_URL = `https://router.huggingface.co/hf-inference/models/${HF_MODEL}`;
 
@@ -14,24 +14,24 @@ async function generateEmbedding(text) {
     const response = await axios.post(
       HF_API_URL,
       {
-        inputs: [text] // HF expects array input
+        inputs: [text] 
       },
       {
         headers: {
           Authorization: `Bearer ${process.env.HF_API_KEY}`,
           "Content-Type": "application/json",
-          "x-wait-for-model": "true" // 🔥 Important: Wait if model is loading
+          "x-wait-for-model": "true" 
         }
       }
     );
 
-    // ✅ Response structure handle karna
+    
     if (Array.isArray(response.data) && response.data.length > 0) {
-        // Agar nested array hai [[0.1, 0.2...]] (Standard HF response)
+        
         if (Array.isArray(response.data[0])) {
             return response.data[0]; 
         }
-        // Agar flat array hai [0.1, 0.2...]
+    
         return response.data;
     }
     

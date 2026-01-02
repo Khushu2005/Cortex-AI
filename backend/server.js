@@ -12,7 +12,7 @@ initSocketServer(httpServer);
 server.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://cortex-ai-frontend.vercel.app" // agar deployed frontend ho
+    "https://cortex-ai-frontend.vercel.app" 
   ],
   credentials: true
 }));
