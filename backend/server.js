@@ -12,7 +12,7 @@ initSocketServer(httpServer);
 server.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://cortex-ai-frontend.vercel.app" 
+    "https://cortex-ai-omega.vercel.app" 
   ],
   credentials: true
 }));

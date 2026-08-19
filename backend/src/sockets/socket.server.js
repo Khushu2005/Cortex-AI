@@ -11,7 +11,7 @@ function initSocketServer(httpServer) {
     const io = new Server(httpServer, {
         cors: {
             origin: ["http://localhost:5173", 
-                // "https://cortex-ai-omega.vercel.app"
+                "https://cortex-ai-omega.vercel.app"
             ],
             methods: ["GET", "POST"],
             credentials: true
